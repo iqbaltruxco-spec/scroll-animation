@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PARIS VOYAGE — Clean & Smart Travel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* =========================================================
+       CSS VARIABLES & RESET
+       ========================================================= */
+    :root {
+      --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --font-editorial: "Playfair Display", Georgia, serif;
+      --bg-black: #000000;
+      --text-white: #ffffff;
+      --accent-blue: #0066ff;
+      --card-bg: rgba(20, 20, 24, 0.65);
+      --card-bg-active: rgba(30, 30, 36, 0.85);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --pill-bg: rgba(255, 255, 255, 0.08);
+      --pill-bg-hover: rgba(255, 255, 255, 0.18);
+      --pill-border: rgba(255, 255, 255, 0.18);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-black);
+    }
+
+    body {
+      background-color: var(--bg-black);
+      color: var(--text-white);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    ::selection {
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    button, input, textarea {
+      font-family: inherit;
+    }
+
+    /* =========================================================
+       PRELOADER OVERLAY
+       ========================================================= */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-brand {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+
+    .loader-bar-wrap {
+      width: 240px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loader-bar {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      border-radius: 9999px;
+      transition: width 0.1s linear;
+    }
+
+    .loader-pct {
+      margin-top: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.05em;
+    }
+
+    /* =========================================================
+       FIXED CANVAS BACKGROUND (ANIMATION ENGINE)
+       ========================================================= */
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #anim-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Cinematic lighting vignette over the canvas */
+    .canvas-scrim {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.75) 100%),
+                  linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.15) 30%, rgba(0, 0, 0, 0.25) 70%, rgba(0, 0, 0, 0.85) 100%);
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       SCROLL REVEAL ANIMATIONS
+       ========================================================= */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .scroll-reveal.is-revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-reveal {
+      opacity: 0;
+      transform: translateY(36px) scale(0.97);
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 150ms ease,
+                  background-color 150ms ease,
+                  box-shadow 150ms ease;
+      will-change: opacity, transform;
+    }
+
+    .card-reveal.is-revealed {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .delay-1 { transition-delay: 0.12s; }
+    .delay-2 { transition-delay: 0.22s; }
+    .delay-3 { transition-delay: 0.32s; }
+    .delay-4 { transition-delay: 0.42s; }
+    .delay-5 { transition-delay: 0.52s; }
+
+    /* =========================================================
+       PAGE CONTENT (SITS ON TOP OF FIXED CANVAS)
+       ========================================================= */
+    .page-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+    }
+
+    /* =========================================================
+       HEADER / NAV
+       ========================================================= */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 24px 20px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background-color 200ms ease;
+    }
+
+    .brand-wordmark {
+      flex-shrink: 0;
+      white-space: nowrap;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-white);
+      text-decoration: none;
+    }
+
+    .brand-wordmark:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 4px;
+    }
+
+    .nav-pills {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 2px 0;
+      scrollbar-width: none;
+    }
+
+    .nav-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-pill {
+      flex-shrink: 0;
+      white-space: nowrap;
+      border-radius: 9999px;
+      border: 1px solid var(--pill-border);
+      background-color: var(--pill-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-white);
+      cursor: pointer;
+      transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    }
+
+    .nav-pill:hover {
+      background-color: var(--pill-bg-hover);
+    }
+
+    .nav-pill.is-active {
+      border-color: #ffffff;
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .menu-button {
+      flex-shrink: 0;
+      white-space: nowrap;
+      border-radius: 9999px;
+      border: 1px solid var(--pill-border);
+      background-color: var(--pill-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-white);
+      cursor: pointer;
+      transition: background-color 150ms ease;
+    }
+
+    .menu-button:hover {
+      background-color: var(--pill-bg-hover);
+    }
+
+    /* =========================================================
+       SECTION 1: HERO BANNER
+       ========================================================= */
+    .hero-section {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0 20px 48px;
+    }
+
+    .hero-center {
+      margin: 64px auto 48px;
+      display: flex;
+      max-width: 896px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .eyebrow {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: rgba(255, 255, 255, 0.9);
+      text-transform: uppercase;
+    }
+
+    .hero-headline {
+      margin: 16px 0 0;
+      max-width: 768px;
+      font-size: 38px;
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--text-white);
+      text-wrap: balance;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .hero-subtext {
+      margin: 24px 0 0;
+      max-width: 672px;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+    }
+
+    .cta-primary {
+      margin-top: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      border: none;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      padding: 6px 6px 6px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #000000;
+      cursor: pointer;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .cta-primary:hover {
+      transform: scale(1.02);
+      box-shadow: 0 15px 30px -5px rgba(255, 255, 255, 0.2);
+    }
+
+    .cta-primary:active {
+      transform: scale(0.99);
+    }
+
+    .cta-circle-icon {
+      display: flex;
+      height: 36px;
+      width: 36px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      transition: transform 150ms ease;
+    }
+
+    .cta-primary:hover .cta-circle-icon {
+      transform: translate(2px, -2px);
+    }
+
+    .hero-bottom-cards {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .info-card {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 28px;
+      text-align: left;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-card.is-highlighted {
+      border-color: rgba(255, 255, 255, 0.5);
+      background-color: var(--card-bg-active);
+    }
+
+    .card-icon-badge {
+      margin-bottom: 24px;
+      display: flex;
+      height: 40px;
+      width: 40px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background-color: #ffffff;
+      color: var(--accent-blue);
+    }
+
+    .card-kicker {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .card-title {
+      margin: 8px 0 0;
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .card-copy {
+      margin: 14px 0 0;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* =========================================================
+       SECTION 2: WHY CHOOSE US
+       ========================================================= */
+    .why-section {
+      width: 100%;
+      padding: 100px 20px 120px;
+      text-align: center;
+      color: var(--text-white);
+    }
+
+    .why-container {
+      margin: 0 auto;
+      display: flex;
+      max-width: 1024px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .editorial-headline {
+      margin: 12px 0 0;
+      max-width: 768px;
+      font-family: var(--font-editorial);
+      font-size: 42px;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.12;
+      letter-spacing: -0.015em;
+      color: var(--text-white);
+      text-wrap: balance;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+    }
+
+    .section-subtext {
+      margin: 20px 0 0;
+      max-width: 672px;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .why-grid {
+      margin-top: 56px;
+      display: grid;
+      width: 100%;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      text-align: left;
+    }
+
+    .why-card {
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 28px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    }
+
+    .why-card:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      background-color: var(--card-bg-active);
+    }
+
+    .why-number {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.65);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .why-title {
+      margin: 12px 0 0;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .why-desc {
+      margin: 12px 0 0;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* =========================================================
+       SECTION 3: POPULAR TOURS
+       ========================================================= */
+    .tours-section {
+      width: 100%;
+      overflow: hidden;
+      padding: 100px 20px 120px;
+      text-align: center;
+      color: var(--text-white);
+    }
+
+    .tours-container {
+      margin: 0 auto;
+      max-width: 1152px;
+    }
+
+    .tours-headline {
+      margin: 0 auto;
+      max-width: 576px;
+      font-size: 36px;
+      font-weight: 500;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      color: var(--text-white);
+      text-wrap: balance;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+    }
+
+    .editorial-inline {
+      font-family: var(--font-editorial);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .carousel-stage {
+      position: relative;
+      margin-top: 56px;
+      display: flex;
+      min-height: 450px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .carousel-track {
+      position: relative;
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tour-card {
+      position: absolute;
+      display: flex;
+      height: 420px;
+      width: 275px;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid var(--card-border);
+      background-color: #171717;
+      padding: 20px;
+      text-align: left;
+      transition: transform 300ms ease-out, opacity 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+    }
+
+    .tour-card.is-center {
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85);
+    }
+
+    .tour-card:not(.is-center) {
+      cursor: pointer;
+    }
+
+    .tour-card:not(.is-center):hover {
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .tour-card-img {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+    }
+
+    .tour-card-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(0, 0, 0, 0.5) 50%,
+        rgba(0, 0, 0, 0.15) 100%
+      );
+    }
+
+    .tour-card-content {
+      position: relative;
+      z-index: 10;
+    }
+
+    .tour-card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tour-card-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+    }
+
+    .tour-card-price {
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-white);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tour-card-desc {
+      margin: 8px 0 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .tour-card-meta {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tour-explore-btn {
+      margin-top: 16px;
+      width: 100%;
+      border: none;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      cursor: pointer;
+      transition: transform 150ms ease, background-color 150ms ease;
+    }
+
+    .tour-explore-btn:hover {
+      transform: scale(1.02);
+      background-color: #f3f3f3;
+    }
+
+    .carousel-controls {
+      margin-top: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .carousel-arrow {
+      display: flex;
+      height: 44px;
+      width: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background-color: var(--pill-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 150ms ease, transform 150ms ease;
+    }
+
+    .carousel-arrow:hover {
+      background-color: var(--pill-bg-hover);
+      transform: scale(1.05);
+    }
+
+    .view-more-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      text-underline-offset: 4px;
+      cursor: pointer;
+      border-radius: 9999px;
+      transition: background-color 150ms ease;
+    }
+
+    .view-more-btn:hover {
+      text-decoration: underline;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .all-tours-grid {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      text-align: left;
+    }
+
+    .all-tours-grid[hidden] {
+      display: none;
+    }
+
+    .grid-tour-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 24px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    }
+
+    .grid-tour-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .grid-tour-meta {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grid-tour-desc {
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .grid-explore-btn {
+      margin-top: 20px;
+      display: inline-flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      cursor: pointer;
+      transition: transform 150ms ease;
+    }
+
+    .grid-explore-btn:hover {
+      transform: scale(1.01);
+    }
+
+    /* =========================================================
+       SECTION 4: PLAN YOUR DREAM PARIS GETAWAY (CTA)
+       ========================================================= */
+    .cta-section {
+      width: 100%;
+      padding: 100px 20px 140px;
+      text-align: center;
+      color: var(--text-white);
+      min-height: 75vh;
+      display: flex;
+      align-items: center;
+    }
+
+    .cta-container {
+      margin: 0 auto;
+      display: flex;
+      max-width: 768px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .cta-copy {
+      margin: 24px 0 0;
+      max-width: 672px;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .cta-copy + .cta-copy {
+      margin-top: 16px;
+    }
+
+    .cta-buttons {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .cta-buttons .cta-primary {
+      margin-top: 0;
+    }
+
+    .cta-secondary {
+      flex-shrink: 0;
+      white-space: nowrap;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background-color: var(--pill-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 150ms ease, transform 150ms ease;
+    }
+
+    .cta-secondary:hover {
+      background-color: var(--pill-bg-hover);
+      transform: scale(1.02);
+    }
+
+    /* =========================================================
+       DRAWERS & MODALS
+       ========================================================= */
+    .overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      display: flex;
+      background-color: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .overlay-backdrop[hidden] {
+      display: none;
+    }
+
+    .drawer-backdrop {
+      justify-content: flex-end;
+    }
+
+    .modal-backdrop {
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .drawer-panel {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      max-width: 384px;
+      flex-direction: column;
+      justify-content: space-between;
+      border-left: 1px solid var(--card-border);
+      background-color: #09090b;
+      padding: 32px;
+      color: #ffffff;
+    }
+
+    .drawer-header,
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .modal-header {
+      align-items: flex-start;
+    }
+
+    .drawer-brand {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+
+    .icon-close-btn {
+      display: flex;
+      height: 36px;
+      width: 36px;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      border: 1px solid var(--card-border);
+      background-color: var(--pill-bg);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 150ms ease;
+    }
+
+    .icon-close-btn:hover {
+      background-color: var(--pill-bg-hover);
+    }
+
+    .drawer-nav {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drawer-nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: none;
+      border-radius: 16px;
+      background: transparent;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .drawer-nav-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .drawer-nav-item.is-active {
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    .drawer-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 24px;
+    }
+
+    .full-pill-btn {
+      display: inline-flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      border: none;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      padding: 6px 6px 6px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #000000;
+      cursor: pointer;
+      transition: transform 150ms ease;
+    }
+
+    .full-pill-btn:hover {
+      transform: scale(1.01);
+    }
+
+    .full-pill-btn .cta-circle-icon {
+      height: 32px;
+      width: 32px;
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-width: 448px;
+      border-radius: 24px;
+      border: 1px solid var(--card-border);
+      background-color: #09090b;
+      padding: 28px;
+      color: #ffffff;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .modal-subtitle {
+      margin: 6px 0 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .modal-form {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-form[hidden],
+    .modal-success[hidden],
+    .form-error[hidden] {
+      display: none;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .field-input,
+    .field-textarea {
+      margin-top: 6px;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background-color: rgba(255, 255, 255, 0.06);
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #ffffff;
+    }
+
+    .field-textarea {
+      resize: none;
+    }
+
+    .field-input::placeholder,
+    .field-textarea::placeholder {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .field-input:focus,
+    .field-textarea:focus {
+      border-color: #ffffff;
+      outline: none;
+    }
+
+    .form-error {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #ff6060;
+    }
+
+    .modal-success {
+      margin-top: 24px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      padding: 24px;
+      text-align: left;
+    }
+
+    .success-badge {
+      margin-bottom: 12px;
+      display: flex;
+      height: 36px;
+      width: 36px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      background-color: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    .success-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .success-copy {
+      margin: 6px 0 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .done-btn {
+      margin-top: 20px;
+      border: none;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       RESPONSIVE BREAKPOINTS
+       ========================================================= */
+    @media (min-width: 640px) {
+      .top-header {
+        padding: 32px 40px;
+        gap: 24px;
+      }
+
+      .brand-wordmark {
+        font-size: 22px;
+      }
+
+      .nav-pills {
+        gap: 8px;
+      }
+
+      .nav-pill,
+      .menu-button {
+        padding: 8px 20px;
+        font-size: 14px;
+      }
+
+      .hero-section {
+        padding: 0 40px 64px;
+      }
+
+      .hero-center {
+        margin: 96px auto 64px;
+      }
+
+      .eyebrow {
+        font-size: 15px;
+      }
+
+      .hero-headline {
+        font-size: 52px;
+      }
+
+      .hero-subtext {
+        font-size: 16px;
+      }
+
+      .why-section {
+        padding: 120px 40px 140px;
+      }
+
+      .editorial-headline {
+        font-size: 56px;
+      }
+
+      .section-subtext,
+      .cta-copy {
+        font-size: 17px;
+      }
+
+      .why-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .why-card-span-full {
+        grid-column: span 2;
+      }
+
+      .tours-section {
+        padding: 120px 40px 140px;
+      }
+
+      .tours-headline {
+        font-size: 48px;
+      }
+
+      .carousel-stage {
+        min-height: 480px;
+      }
+
+      .tour-card {
+        height: 450px;
+        width: 300px;
+      }
+
+      .all-tours-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cta-section {
+        padding: 120px 40px 160px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .hero-bottom-cards {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .top-header {
+        padding: 36px 56px;
+      }
+
+      .hero-section {
+        padding: 0 56px 80px;
+      }
+
+      .hero-center {
+        margin: 112px auto 80px;
+      }
+
+      .hero-headline {
+        font-size: 62px;
+      }
+
+      .why-section {
+        padding: 140px 56px 160px;
+      }
+
+      .editorial-headline {
+        font-size: 68px;
+      }
+
+      .why-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .why-card-2 {
+        grid-column: span 2;
+      }
+
+      .why-card-3 {
+        grid-column: span 3;
+      }
+
+      .tours-section {
+        padding: 140px 56px 160px;
+      }
+
+      .tours-headline {
+        font-size: 54px;
+      }
+
+      .all-tours-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .cta-section {
+        padding: 140px 56px 180px;
+      }
+
+      .cta-section .editorial-headline {
+        font-size: 66px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================
+       PRELOADER
+       ========================================================= -->
+  <div id="loader">
+    <div class="loader-brand">PARIS VOYAGE</div>
+    <div class="loader-bar-wrap"><div id="progress-bar" class="loader-bar"></div></div>
+    <div id="pct" class="loader-pct">0%</div>
+  </div>
+
+  <!-- =========================================================
+       FIXED CANVAS BACKGROUND ANIMATION
+       ========================================================= -->
+  <div id="canvas-container">
+    <canvas id="anim-canvas"></canvas>
+    <div class="canvas-scrim"></div>
+  </div>
+
+  <!-- =========================================================
+       PAGE CONTENT (SYNCHRONIZED WITH SCROLL ANIMATION)
+       ========================================================= -->
+  <div class="page-wrapper">
+
+    <!-- Top Navigation Bar (Sticky) -->
+    <header class="top-header scroll-reveal">
+      <a href="#home" data-nav-item="Home" class="brand-wordmark">PARIS VOYAGE</a>
+
+      <nav aria-label="Primary Navigation" class="nav-pills">
+        <button type="button" data-nav-item="Home" class="nav-pill is-active">Home</button>
+        <button type="button" data-nav-item="Discover" class="nav-pill">Discover</button>
+        <button type="button" data-nav-item="Tours" class="nav-pill">Tours</button>
+        <button type="button" data-nav-item="About us" class="nav-pill">About us</button>
+        <button type="button" data-nav-item="Contact" class="nav-pill">Contact</button>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" id="open-menu-btn" class="menu-button">Open menu</button>
+      </div>
+    </header>
+
+    <!-- Section 1: Hero Banner -->
+    <section id="home" aria-label="Paris Travel Hero Banner" class="hero-section">
+      <!-- Center Hero Block -->
+      <div id="discover" class="hero-center">
+        <p class="eyebrow scroll-reveal">Explore the Magic of Paris</p>
+
+        <h1 class="hero-headline scroll-reveal delay-1">Discover Paris – Your Dream Destination Awaits</h1>
+
+        <p class="hero-subtext scroll-reveal delay-2">
+          Experience the beauty, romance, and charm of Paris with unforgettable travel
+          experiences. From the iconic Eiffel Tower to charming streets, world-famous museums,
+          and delicious French cuisine, we help you explore the best of Paris. Let us make your
+          journey memorable with personalized travel packages and hassle-free planning.
+        </p>
+
+        <div class="scroll-reveal delay-3">
+          <button type="button" data-open-modal="true" class="cta-primary">
+            <span>Explore Paris Tours</span>
+            <span class="cta-circle-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Cards Row -->
+      <div class="hero-bottom-cards">
+        <article id="about-us" class="info-card card-reveal delay-3">
+          <div class="card-icon-badge" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+          </div>
+          <p class="card-kicker">About Us – Your Trusted Paris Travel Partner</p>
+          <h2 class="card-title">Making Every Paris Journey Special</h2>
+          <p class="card-copy">
+            We are passionate about creating unforgettable travel experiences in the beautiful
+            city of Paris. Our goal is to make exploring Paris easy, enjoyable, and stress-free
+            for every traveler.
+          </p>
+        </article>
+
+        <article id="tours" class="info-card card-reveal delay-4">
+          <p class="card-kicker">Discover Our Exclusive Paris Tours</p>
+          <h2 class="card-title">Explore Paris Your Way</h2>
+          <p class="card-copy">
+            Experience the city's most beautiful attractions and unforgettable destinations
+            with our specially designed travel experiences.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Section 2: Why Choose Us -->
+    <section id="why-choose-us" aria-label="Why Choose Us" class="why-section">
+      <div class="why-container">
+        <p class="eyebrow scroll-reveal">Why Choose Us?</p>
+        <h2 class="editorial-headline scroll-reveal delay-1">Your Journey, Our Priority</h2>
+        <p class="section-subtext scroll-reveal delay-2">
+          Planning a trip should be exciting, not stressful. We make your Paris travel experience
+          smooth, comfortable, and memorable.
+        </p>
+
+        <div class="why-grid">
+          <article class="why-card why-card-2 card-reveal delay-1">
+            <p class="why-number">01.</p>
+            <h3 class="why-title">Personalized Travel Packages</h3>
+            <p class="why-desc">Trips designed around your interests and budget.</p>
+          </article>
+
+          <article class="why-card why-card-2 card-reveal delay-2">
+            <p class="why-number">02.</p>
+            <h3 class="why-title">Local Travel Expertise</h3>
+            <p class="why-desc">Discover popular attractions and hidden Parisian gems.</p>
+          </article>
+
+          <article class="why-card why-card-2 card-reveal delay-3">
+            <p class="why-number">03.</p>
+            <h3 class="why-title">Hassle-Free Planning</h3>
+            <p class="why-desc">We take care of the important travel arrangements.</p>
+          </article>
+
+          <article class="why-card why-card-3 card-reveal delay-4">
+            <p class="why-number">04.</p>
+            <h3 class="why-title">Affordable Travel Options</h3>
+            <p class="why-desc">Enjoy memorable experiences with flexible packages.</p>
+          </article>
+
+          <article class="why-card why-card-span-full why-card-3 card-reveal delay-5">
+            <p class="why-number">05.</p>
+            <h3 class="why-title">Dedicated Customer Support</h3>
+            <p class="why-desc">Assistance throughout your travel planning journey.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Discover Our Most Popular Tours -->
+    <section
+      id="popular-tours"
+      aria-label="Discover Our Most Popular Tours"
+      class="tours-section"
+    >
+      <div class="tours-container">
+        <h2 class="tours-headline scroll-reveal">
+          Discover <span class="editorial-inline">Our Most</span><br />
+          <span class="editorial-inline">Popular</span> Tours
+        </h2>
+
+        <div class="carousel-stage card-reveal delay-1">
+          <div class="carousel-track">
+            <article class="tour-card">
+              <img
+                src="./images/eiffel-twilight.jpg"
+                alt="Illuminated Eiffel Tower at twilight in Paris"
+                class="tour-card-img"
+              />
+              <div class="tour-card-scrim" aria-hidden="true"></div>
+              <div class="tour-card-content">
+                <div class="tour-card-header">
+                  <h3 class="tour-card-title">Eiffel Tower Twilight</h3>
+                  <span class="tour-card-price">€165</span>
+                </div>
+                <p class="tour-card-desc">
+                  Admire the sparkling Eiffel Tower at dusk with priority access and a guided
+                  stroll along Trocadéro.
+                </p>
+                <div class="tour-card-meta">
+                  <span>Iconic Landmarks</span>
+                  <span aria-hidden="true">·</span>
+                  <span>3 Hours</span>
+                </div>
+                <button
+                  type="button"
+                  data-explore-tour="Eiffel Tower Twilight"
+                  class="tour-explore-btn"
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+
+            <article class="tour-card">
+              <img
+                src="./images/seine-cruise.jpg"
+                alt="Classic river boat cruising along the Seine River in Paris at golden hour"
+                class="tour-card-img"
+              />
+              <div class="tour-card-scrim" aria-hidden="true"></div>
+              <div class="tour-card-content">
+                <div class="tour-card-header">
+                  <h3 class="tour-card-title">Seine River Cruise</h3>
+                  <span class="tour-card-price">€145</span>
+                </div>
+                <p class="tour-card-desc">
+                  Glide past historic bridges, Notre-Dame, and illuminated riverbanks on a
+                  relaxing golden-hour cruise.
+                </p>
+                <div class="tour-card-meta">
+                  <span>Romantic Cruise</span>
+                  <span aria-hidden="true">·</span>
+                  <span>2.5 Hours</span>
+                </div>
+                <button
+                  type="button"
+                  data-explore-tour="Seine River Cruise"
+                  class="tour-explore-btn"
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+
+            <article class="tour-card is-center">
+              <img
+                src="./images/louvre-courtyard.jpg"
+                alt="Louvre Museum glass pyramid and courtyard reflecting pools in Paris"
+                class="tour-card-img"
+              />
+              <div class="tour-card-scrim" aria-hidden="true"></div>
+              <div class="tour-card-content">
+                <div class="tour-card-header">
+                  <h3 class="tour-card-title">Louvre &amp; Royal Gardens</h3>
+                  <span class="tour-card-price">€195</span>
+                </div>
+                <p class="tour-card-desc">
+                  Explore world-famous masterpieces inside the Louvre with timed entry, followed
+                  by a walk through the Tuileries.
+                </p>
+                <div class="tour-card-meta">
+                  <span>Art &amp; Culture</span>
+                  <span aria-hidden="true">·</span>
+                  <span>4 Hours</span>
+                </div>
+                <button
+                  type="button"
+                  data-explore-tour="Louvre & Royal Gardens"
+                  class="tour-explore-btn"
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+
+            <article class="tour-card">
+              <img
+                src="./images/montmartre-streets.jpg"
+                alt="Cobblestone street and classic cafe terrace in Montmartre Paris"
+                class="tour-card-img"
+              />
+              <div class="tour-card-scrim" aria-hidden="true"></div>
+              <div class="tour-card-content">
+                <div class="tour-card-header">
+                  <h3 class="tour-card-title">Montmartre Heritage</h3>
+                  <span class="tour-card-price">€135</span>
+                </div>
+                <p class="tour-card-desc">
+                  Wander charming cobblestone lanes, visit Sacré-Cœur, and savor authentic French
+                  pastries and café culture.
+                </p>
+                <div class="tour-card-meta">
+                  <span>Culinary &amp; Streets</span>
+                  <span aria-hidden="true">·</span>
+                  <span>3.5 Hours</span>
+                </div>
+                <button
+                  type="button"
+                  data-explore-tour="Montmartre Heritage"
+                  class="tour-explore-btn"
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+
+            <article class="tour-card">
+              <img
+                src="./images/versailles-gardens.jpg"
+                alt="Ornate golden gates and manicured gardens of the Palace of Versailles"
+                class="tour-card-img"
+              />
+              <div class="tour-card-scrim" aria-hidden="true"></div>
+              <div class="tour-card-content">
+                <div class="tour-card-header">
+                  <h3 class="tour-card-title">Versailles Palace Escape</h3>
+                  <span class="tour-card-price">€240</span>
+                </div>
+                <p class="tour-card-desc">
+                  Step inside the Hall of Mirrors and explore the manicured royal gardens with
+                  seamless round-trip transfers.
+                </p>
+                <div class="tour-card-meta">
+                  <span>Royal Day Trip</span>
+                  <span aria-hidden="true">·</span>
+                  <span>6 Hours</span>
+                </div>
+                <button
+                  type="button"
+                  data-explore-tour="Versailles Palace Escape"
+                  class="tour-explore-btn"
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Carousel Controls -->
+        <div class="carousel-controls scroll-reveal delay-2">
+          <button type="button" id="prev-tour-btn" aria-label="Previous tour" class="carousel-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+          </button>
+
+          <button type="button" id="view-more-btn" class="view-more-btn">View More Tours</button>
+
+          <button type="button" id="next-tour-btn" aria-label="Next tour" class="carousel-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Expandable All Tours Grid -->
+        <div id="all-tours-grid" class="all-tours-grid" hidden>
+          <article class="grid-tour-card">
+            <div>
+              <div class="tour-card-header">
+                <h3 class="grid-tour-title">Eiffel Tower Twilight</h3>
+                <span class="tour-card-price">€165</span>
+              </div>
+              <p class="grid-tour-meta">Iconic Landmarks · 3 Hours</p>
+              <p class="grid-tour-desc">
+                Admire the sparkling Eiffel Tower at dusk with priority access and a guided
+                stroll along Trocadéro.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-explore-tour="Eiffel Tower Twilight"
+              class="grid-explore-btn"
+            >
+              Explore
+            </button>
+          </article>
+
+          <article class="grid-tour-card">
+            <div>
+              <div class="tour-card-header">
+                <h3 class="grid-tour-title">Seine River Cruise</h3>
+                <span class="tour-card-price">€145</span>
+              </div>
+              <p class="grid-tour-meta">Romantic Cruise · 2.5 Hours</p>
+              <p class="grid-tour-desc">
+                Glide past historic bridges, Notre-Dame, and illuminated riverbanks on a
+                relaxing golden-hour cruise.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-explore-tour="Seine River Cruise"
+              class="grid-explore-btn"
+            >
+              Explore
+            </button>
+          </article>
+
+          <article class="grid-tour-card">
+            <div>
+              <div class="tour-card-header">
+                <h3 class="grid-tour-title">Louvre &amp; Royal Gardens</h3>
+                <span class="tour-card-price">€195</span>
+              </div>
+              <p class="grid-tour-meta">Art &amp; Culture · 4 Hours</p>
+              <p class="grid-tour-desc">
+                Explore world-famous masterpieces inside the Louvre with timed entry, followed by
+                a walk through the Tuileries.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-explore-tour="Louvre & Royal Gardens"
+              class="grid-explore-btn"
+            >
+              Explore
+            </button>
+          </article>
+
+          <article class="grid-tour-card">
+            <div>
+              <div class="tour-card-header">
+                <h3 class="grid-tour-title">Montmartre Heritage</h3>
+                <span class="tour-card-price">€135</span>
+              </div>
+              <p class="grid-tour-meta">Culinary &amp; Streets · 3.5 Hours</p>
+              <p class="grid-tour-desc">
+                Wander charming cobblestone lanes, visit Sacré-Cœur, and savor authentic French
+                pastries and café culture.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-explore-tour="Montmartre Heritage"
+              class="grid-explore-btn"
+            >
+              Explore
+            </button>
+          </article>
+
+          <article class="grid-tour-card">
+            <div>
+              <div class="tour-card-header">
+                <h3 class="grid-tour-title">Versailles Palace Escape</h3>
+                <span class="tour-card-price">€240</span>
+              </div>
+              <p class="grid-tour-meta">Royal Day Trip · 6 Hours</p>
+              <p class="grid-tour-desc">
+                Step inside the Hall of Mirrors and explore the manicured royal gardens with
+                seamless round-trip transfers.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-explore-tour="Versailles Palace Escape"
+              class="grid-explore-btn"
+            >
+              Explore
+            </button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Plan Your Dream Paris Getaway (CTA) -->
+    <section
+      id="plan-getaway"
+      aria-label="Plan Your Dream Paris Getaway"
+      class="cta-section"
+    >
+      <div class="cta-container">
+        <p class="eyebrow scroll-reveal">Plan Your Dream Paris Getaway</p>
+        <h2 class="editorial-headline scroll-reveal delay-1">Ready to Fall in Love with Paris?</h2>
+
+        <p class="cta-copy scroll-reveal delay-2">
+          Your dream Paris adventure is just one step away! Whether you want to admire the Eiffel
+          Tower, enjoy a romantic Seine River cruise, explore historic landmarks, or experience
+          authentic French culture, we are here to make it happen.
+        </p>
+
+        <p class="cta-copy scroll-reveal delay-3">
+          Let us help you plan a personalized Paris vacation filled with beautiful destinations,
+          unforgettable experiences, and lasting memories.
+        </p>
+
+        <div class="cta-buttons scroll-reveal delay-4">
+          <button type="button" data-open-modal="true" class="cta-primary">
+            <span>Plan Your Trip Today</span>
+            <span class="cta-circle-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </span>
+          </button>
+
+          <button type="button" data-open-modal="true" class="cta-secondary">Contact Us</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Drawer -->
+    <div id="menu-drawer" class="overlay-backdrop drawer-backdrop" hidden>
+      <div role="dialog" aria-modal="true" aria-label="Site Menu" class="drawer-panel">
+        <div>
+          <div class="drawer-header">
+            <span class="drawer-brand">PARIS VOYAGE</span>
+            <button type="button" id="close-menu-btn" aria-label="Close menu" class="icon-close-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <nav class="drawer-nav">
+            <button type="button" data-nav-item="Home" class="drawer-nav-item is-active">
+              <span>Home</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </button>
+            <button type="button" data-nav-item="Discover" class="drawer-nav-item">
+              <span>Discover</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </button>
+            <button type="button" data-nav-item="Tours" class="drawer-nav-item">
+              <span>Tours</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </button>
+            <button type="button" data-nav-item="About us" class="drawer-nav-item">
+              <span>About us</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </button>
+            <button type="button" data-nav-item="Contact" class="drawer-nav-item">
+              <span>Contact</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" id="drawer-plan-btn" class="full-pill-btn">
+            <span>Plan Your Trip Today</span>
+            <span class="cta-circle-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trip Planning Modal -->
+    <div id="contact-modal" class="overlay-backdrop modal-backdrop" hidden>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Plan Your Paris Experience"
+        class="modal-panel"
+      >
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Plan Your Paris Journey</h2>
+            <p class="modal-subtitle">
+              Share your travel dates and preferred Paris experiences.
+            </p>
+          </div>
+          <button type="button" id="close-modal-btn" aria-label="Close modal" class="icon-close-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="form-success" class="modal-success" hidden>
+          <div class="success-badge" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <h3 class="success-title">Request received</h3>
+          <p id="success-summary" class="success-copy"></p>
+          <button type="button" id="success-done-btn" class="done-btn">Done</button>
+        </div>
+
+        <form id="contact-form" class="modal-form">
+          <div>
+            <label for="contact-name" class="field-label">Full name</label>
+            <input
+              id="contact-name"
+              type="text"
+              placeholder="Camille Laurent"
+              class="field-input"
+            />
+          </div>
+
+          <div>
+            <label for="contact-dates" class="field-label">Preferred travel dates</label>
+            <input
+              id="contact-dates"
+              type="text"
+              placeholder="June 12 – June 18"
+              class="field-input"
+            />
+          </div>
+
+          <div>
+            <label for="contact-email" class="field-label">Email address</label>
+            <input
+              id="contact-email"
+              type="email"
+              placeholder="camille@example.com"
+              class="field-input"
+            />
+          </div>
+
+          <div>
+            <label for="contact-preferences" class="field-label">Tour interests</label>
+            <textarea
+              id="contact-preferences"
+              rows="3"
+              placeholder="Eiffel Tower, Louvre museum, French culinary tours"
+              class="field-textarea"
+            ></textarea>
+          </div>
+
+          <p id="form-error" role="alert" class="form-error" hidden></p>
+
+          <div>
+            <button type="submit" class="full-pill-btn">
+              <span>Request Paris Itinerary</span>
+              <span class="cta-circle-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 17 17 7" />
+                  <path d="M7 7h10v10" />
+                </svg>
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       SCRIPTS: SCROLL ANIMATION & SITE INTERACTION
+       ========================================================= -->
+  <script>
+    (function () {
+      const TOTAL_FRAMES = 456;
+      const canvas = document.getElementById('anim-canvas');
+      const ctx = canvas.getContext('2d');
+      const loader = document.getElementById('loader');
+      const progressBar = document.getElementById('progress-bar');
+      const pctEl = document.getElementById('pct');
+
+      const images = new Array(TOTAL_FRAMES);
+      let loadedCount = 0;
+      let currentFrame = 0;
+      let targetFrame = 0;
+      let isRendering = false;
+
+      // Fit canvas cover
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        drawFrame(Math.round(currentFrame));
+      }
+
+      function drawFrame(index) {
+        const img = images[index];
+        if (!img || !img.complete || !img.naturalWidth) return;
+
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+
+        const scale = Math.max(cw / iw, ch / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (cw - dw) / 2;
+        const dy = (ch - dh) / 2;
+
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.drawImage(img, dx, dy, dw, dh);
+      }
+
+      // Smooth interpolation loop for silky smooth frame scrubbing
+      function animateLoop() {
+        const diff = targetFrame - currentFrame;
+        if (Math.abs(diff) > 0.05) {
+          currentFrame += diff * 0.22;
+          drawFrame(Math.round(currentFrame));
+          requestAnimationFrame(animateLoop);
+        } else {
+          currentFrame = targetFrame;
+          drawFrame(Math.round(currentFrame));
+          isRendering = false;
+        }
+      }
+
+      // Scroll handler: Maps entire document scroll to 0 -> 455 frames
+      function handleScroll() {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = maxScroll > 0 ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1) : 0;
+        targetFrame = progress * (TOTAL_FRAMES - 1);
+
+        if (!isRendering) {
+          isRendering = true;
+          requestAnimationFrame(animateLoop);
+        }
+      }
+
+      // Preload all 456 frames
+      function preloadFrames() {
+        for (let i = 0; i < TOTAL_FRAMES; i++) {
+          const img = new Image();
+          const frameNum = String(i + 1).padStart(3, '0');
+          img.src = `frames/ezgif-frame-${frameNum}.jpg`;
+
+          img.onload = img.onerror = function () {
+            images[i] = (img.complete && img.naturalWidth) ? img : null;
+            loadedCount++;
+            const pct = Math.round((loadedCount / TOTAL_FRAMES) * 100);
+            progressBar.style.width = pct + '%';
+            pctEl.textContent = pct + '%';
+
+            if (loadedCount === TOTAL_FRAMES) {
+              onLoadComplete();
+            }
+          };
+        }
+      }
+
+      function onLoadComplete() {
+        resizeCanvas();
+        drawFrame(0);
+
+        // Hide preloader
+        loader.classList.add('hidden');
+        setTimeout(() => {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 850);
+
+        // Immediately reveal Hero elements right from the start
+        const initialReveals = document.querySelectorAll('#home .scroll-reveal, #home .card-reveal');
+        initialReveals.forEach(el => el.classList.add('is-revealed'));
+
+        // Listen for scroll and resize
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', resizeCanvas, { passive: true });
+
+        // Setup Intersection Observer for progressive scroll reveals
+        setupScrollObserver();
+      }
+
+      // Intersection Observer for progressive, natural reveal effects as user scrolls
+      function setupScrollObserver() {
+        const revealElements = document.querySelectorAll('.scroll-reveal, .card-reveal');
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+              }
+            });
+          },
+          {
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px',
+          }
+        );
+
+        revealElements.forEach((el) => observer.observe(el));
+      }
+
+      preloadFrames();
+    })();
+
+    /* =========================================================
+       WEBSITE FUNCTIONALITY (CAROUSEL, MODAL, DRAWER, NAV)
+       ========================================================= */
+    document.addEventListener('DOMContentLoaded', () => {
+      let activeNav = 'Home';
+      let activeTourIndex = 2;
+      let showAllTours = false;
+
+      const navButtons = document.querySelectorAll('[data-nav-item]');
+      const aboutCard = document.getElementById('about-us');
+      const toursCard = document.getElementById('tours');
+
+      const menuDrawer = document.getElementById('menu-drawer');
+      const openMenuBtn = document.getElementById('open-menu-btn');
+      const closeMenuBtn = document.getElementById('close-menu-btn');
+      const drawerPlanBtn = document.getElementById('drawer-plan-btn');
+
+      const contactModal = document.getElementById('contact-modal');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const contactForm = document.getElementById('contact-form');
+      const formSuccess = document.getElementById('form-success');
+      const formError = document.getElementById('form-error');
+      const successSummary = document.getElementById('success-summary');
+      const successDoneBtn = document.getElementById('success-done-btn');
+
+      const nameInput = document.getElementById('contact-name');
+      const datesInput = document.getElementById('contact-dates');
+      const emailInput = document.getElementById('contact-email');
+      const preferencesInput = document.getElementById('contact-preferences');
+
+      const openModalButtons = document.querySelectorAll('[data-open-modal]');
+      const exploreButtons = document.querySelectorAll('[data-explore-tour]');
+
+      const tourCards = Array.from(document.querySelectorAll('.tour-card'));
+      const prevTourBtn = document.getElementById('prev-tour-btn');
+      const nextTourBtn = document.getElementById('next-tour-btn');
+      const viewMoreBtn = document.getElementById('view-more-btn');
+      const allToursGrid = document.getElementById('all-tours-grid');
+
+      const navTargetMap = {
+        Home: 'home',
+        Discover: 'discover',
+        Tours: 'popular-tours',
+        'About us': 'about-us',
+      };
+
+      function syncNavUI() {
+        navButtons.forEach((btn) => {
+          const item = btn.getAttribute('data-nav-item');
+          btn.classList.toggle('is-active', item === activeNav);
+        });
+
+        if (aboutCard) {
+          aboutCard.classList.toggle('is-highlighted', activeNav === 'About us');
+        }
+        if (toursCard) {
+          toursCard.classList.toggle('is-highlighted', activeNav === 'Tours');
+        }
+      }
+
+      function openMenuDrawer() {
+        if (!menuDrawer) return;
+        menuDrawer.hidden = false;
+      }
+
+      function closeMenuDrawer() {
+        if (!menuDrawer) return;
+        menuDrawer.hidden = true;
+      }
+
+      function openContactModal(prefillTour) {
+        if (!contactModal) return;
+        if (prefillTour && preferencesInput) {
+          preferencesInput.value = `Interested in: ${prefillTour}`;
+        }
+        contactModal.hidden = false;
+      }
+
+      function resetContactModal() {
+        if (!contactModal) return;
+        contactModal.hidden = true;
+        if (contactForm) contactForm.hidden = false;
+        if (formSuccess) formSuccess.hidden = true;
+        if (formError) {
+          formError.hidden = true;
+          formError.textContent = '';
+        }
+        if (nameInput) nameInput.value = '';
+        if (datesInput) datesInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (preferencesInput) preferencesInput.value = '';
+      }
+
+      function renderCarousel() {
+        const total = tourCards.length;
+        if (total === 0) return;
+
+        tourCards.forEach((card, index) => {
+          let offset = index - activeTourIndex;
+          if (offset > Math.floor(total / 2)) offset -= total;
+          if (offset < -Math.floor(total / 2)) offset += total;
+
+          const absOffset = Math.abs(offset);
+          const isCenter = offset === 0;
+
+          const translateX = offset * 185;
+          const scale = isCenter ? 1 : absOffset === 1 ? 0.88 : 0.76;
+          const zIndex = 30 - absOffset * 10;
+          const opacity = absOffset > 2 ? 0 : isCenter ? 1 : absOffset === 1 ? 0.92 : 0.78;
+
+          card.style.transform = `translateX(${translateX}px) scale(${scale})`;
+          card.style.zIndex = String(zIndex);
+          card.style.opacity = String(opacity);
+          card.classList.toggle('is-center', isCenter);
+        });
+      }
+
+      navButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const item = btn.getAttribute('data-nav-item');
+          if (!item) return;
+
+          if (btn.tagName === 'A') {
+            e.preventDefault();
+          }
+
+          activeNav = item;
+          syncNavUI();
+          closeMenuDrawer();
+
+          if (item === 'Contact') {
+            openContactModal();
+            return;
+          }
+
+          const targetId = navTargetMap[item];
+          const targetEl = targetId ? document.getElementById(targetId) : null;
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      if (openMenuBtn) {
+        openMenuBtn.addEventListener('click', openMenuDrawer);
+      }
+      if (closeMenuBtn) {
+        closeMenuBtn.addEventListener('click', closeMenuDrawer);
+      }
+      if (menuDrawer) {
+        menuDrawer.addEventListener('click', (e) => {
+          if (e.target === menuDrawer) {
+            closeMenuDrawer();
+          }
+        });
+      }
+      if (drawerPlanBtn) {
+        drawerPlanBtn.addEventListener('click', () => {
+          closeMenuDrawer();
+          openContactModal();
+        });
+      }
+
+      openModalButtons.forEach((btn) => {
+        btn.addEventListener('click', () => openContactModal());
+      });
+
+      exploreButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const tourTitle = btn.getAttribute('data-explore-tour') || '';
+          openContactModal(tourTitle);
+        });
+      });
+
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', resetContactModal);
+      }
+      if (successDoneBtn) {
+        successDoneBtn.addEventListener('click', resetContactModal);
+      }
+      if (contactModal) {
+        contactModal.addEventListener('click', (e) => {
+          if (e.target === contactModal) {
+            resetContactModal();
+          }
+        });
+      }
+
+      if (contactForm) {
+        contactForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const nameVal = nameInput ? nameInput.value.trim() : '';
+          const emailVal = emailInput ? emailInput.value.trim() : '';
+
+          if (!nameVal || !emailVal) {
+            if (formError) {
+              formError.textContent = 'Please enter your name and email address.';
+              formError.hidden = false;
+            }
+            return;
+          }
+
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailPattern.test(emailVal)) {
+            if (formError) {
+              formError.textContent = 'Please enter a valid email address.';
+              formError.hidden = false;
+            }
+            return;
+          }
+
+          if (formError) {
+            formError.hidden = true;
+            formError.textContent = '';
+          }
+          if (successSummary) {
+            successSummary.textContent = `Thank you, ${nameVal}. Our Paris travel specialists will send personalized tour options to ${emailVal}.`;
+          }
+          contactForm.hidden = true;
+          if (formSuccess) formSuccess.hidden = false;
+        });
+      }
+
+      tourCards.forEach((card, index) => {
+        card.addEventListener('click', () => {
+          if (index !== activeTourIndex) {
+            activeTourIndex = index;
+            renderCarousel();
+          }
+        });
+      });
+
+      if (prevTourBtn) {
+        prevTourBtn.addEventListener('click', () => {
+          activeTourIndex = (activeTourIndex - 1 + tourCards.length) % tourCards.length;
+          renderCarousel();
+        });
+      }
+
+      if (nextTourBtn) {
+        nextTourBtn.addEventListener('click', () => {
+          activeTourIndex = (activeTourIndex + 1) % tourCards.length;
+          renderCarousel();
+        });
+      }
+
+      if (viewMoreBtn && allToursGrid) {
+        viewMoreBtn.addEventListener('click', () => {
+          showAllTours = !showAllTours;
+          allToursGrid.hidden = !showAllTours;
+          viewMoreBtn.textContent = showAllTours ? 'Hide All Tours' : 'View More Tours';
+        });
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeMenuDrawer();
+          resetContactModal();
+        }
+      });
+
+      syncNavUI();
+      renderCarousel();
+    });
+  </script>
+</body>
+</html>

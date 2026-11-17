@@ -1,0 +1,6 @@
+{
+  "name": "SUNROCK",
+  "description": "Clean and smart solar energy solutions for your business, tailor-made for Europe.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
